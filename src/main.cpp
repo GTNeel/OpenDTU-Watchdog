@@ -140,7 +140,7 @@ void loop()
 {
     scheduler.execute();
 
-    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
+    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK --- 
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
         watchdog_safe_mode_active = true; 
         Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
