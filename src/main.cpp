@@ -140,15 +140,15 @@ void loop()
 {
     scheduler.execute();
 
-    // --- 5-MINUTE SAFETY WATCHDOG ---
-    // 300,000 milliseconds = 5 minutes
+    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
         watchdog_safe_mode_active = true; 
-        Serial.println("[WATCHDOG] Network lost for 5 minutes! Forcing fallback limit.");
+        Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
         
         for (uint8_t i = 0; i < InverterApp.getInverterCount(); i++) {
-            // 200 = fallback limit in Watts. 0 = Non-Persistent Absolute.
-            InverterApp.getInverter(i)->setPowerLimit(20, 0); 
+            auto inv = InverterApp.getInverter(i);
+            // Forces 200 Watts limit using the Absolute control type
+            inv->sendActivePowerControlRequest(200, PowerLimitControlType::AbsoluteNonPersistent);
         }
     }
 }
