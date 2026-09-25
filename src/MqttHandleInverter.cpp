@@ -201,6 +201,9 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitNonPersistentRelative:
         // Set inverter limit relative non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f %%", payload_val);
+        // --- INJECT Watchdog TWO LINES ---
+        last_network_cmd_time = millis(); // Reset the 5-minute clock!
+        watchdog_safe_mode_active = false; // Disarm fallback state
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::RelativNonPersistent);
         } else {
@@ -211,6 +214,9 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitNonPersistentAbsolute:
         // Set inverter limit absolute non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f W", payload_val);
+        // --- INJECT Watchdog TWO LINES ---
+        last_network_cmd_time = millis(); // Reset the 5-minute clock!
+        watchdog_safe_mode_active = false; // Disarm fallback state
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::AbsolutNonPersistent);
         } else {
