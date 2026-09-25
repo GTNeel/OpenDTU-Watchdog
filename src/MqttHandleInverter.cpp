@@ -8,6 +8,8 @@
 
 #undef TAG
 static const char* TAG = "mqtt";
+extern unsigned long last_network_cmd_time;
+extern bool watchdog_safe_mode_active;
 
 #define PUBLISH_MAX_INTERVAL 60000
 
