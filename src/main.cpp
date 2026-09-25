@@ -32,6 +32,10 @@
 #undef TAG
 static const char* TAG = "main";
 
+// --- WATCHDOG CONTROLS ---
+unsigned long last_network_cmd_time = 0; 
+bool watchdog_safe_mode_active = false;
+
 void setup()
 {
     // Move all dynamic allocations >512byte to psram (if available)
@@ -129,9 +133,22 @@ void setup()
     RestartHelper.init(scheduler);
 
     ESP_LOGI(TAG, "Startup complete");
+    
 }
 
 void loop()
 {
     scheduler.execute();
+
+    // --- 5-MINUTE SAFETY WATCHDOG ---
+    // 300,000 milliseconds = 5 minutes
+    if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
+        watchdog_safe_mode_active = true; 
+        Serial.println("[WATCHDOG] Network lost for 5 minutes! Forcing fallback limit.");
+        
+        for (uint8_t i = 0; i < InverterApp.getInverterCount(); i++) {
+            // 200 = fallback limit in Watts. 0 = Non-Persistent Absolute.
+            InverterApp.getInverter(i)->setPowerLimit(20, 0); 
+        }
+    }
 }
