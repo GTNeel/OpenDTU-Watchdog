@@ -115,7 +115,6 @@ void MqttHandleInverterClass::loop()
 
         yield();
     }
-}
 
     // --- WatchDog  DROPPING THE TWO TIME VARIABLE TRACKERS RIGHT HERE ---
     static unsigned long last_diagnostic_print = 0;
