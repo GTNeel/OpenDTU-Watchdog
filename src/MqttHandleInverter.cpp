@@ -195,14 +195,18 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
 
     std::string strValue(reinterpret_cast<const char*>(payload), len);
     float payload_val = -1;
+    
+    // Create the local text alias here, SAFELY OUTSIDE the try/catch logic blocks
+    const char* topic = msg_topic;
+
     try {
         payload_val = std::stof(strValue);
     } catch (std::invalid_argument const& e) {
-        ESP_LOGW(TAG, "MQTT handler: cannot parse payload of topic '%s' as float: %s",
-            const char* topic = msg_topic;
+        // This macro is now perfectly put back together and closed with );
+        ESP_LOGW(TAG, "MQTT handler: cannot parse payload of topic '%s' as float: %s", topic, strValue.c_str());
         return;
     }
-
+    
     switch (t) {
     case Topic::LimitPersistentRelative:
         // Set inverter limit relative persistent
