@@ -7,7 +7,7 @@
 
 ## WatchDog
 I've added WatchDog code so if the controller software doesn't send updates for 5 minutes the DTU will set the inverter's non-persistent power to 20w until control is returned.
-This can happen if the WiFi network goes down or if the controller code crashes etc.
+This can happen if the WiFi network goes down or if the controller code crashes etc. Testing is not complete yet!
 
 ## !! IMPORTANT UPGRADE NOTES !!
 
