@@ -73,15 +73,30 @@ void MqttHandleInverterClass::loop()
             MqttSettings.publish(subtopic + "/device/hwversion", inv->DevInfo()->getHwVersion());
         }
 
-    // === 5-MINUTE SAFETY WATCHDOG FALLBACK ===
-        if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
-            watchdog_safe_mode_active = true; 
-            ESP_LOGI("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
+    // === 2. YOUR 5-MINUTE SAFETY WATCHDOG FALLBACK WITH LIVE INTERVAL LOGGER ===
+    
+    // Static variables preserve their values between loops so we don't spam the console
+    static unsigned long last_print_time = 0;
+    unsigned long current_time = millis();
+    unsigned long elapsed_since_last_cmd = current_time - last_network_cmd_time;
 
-            for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
-                auto inv = Hoymiles.getInverterByPos(i);
-                if (inv != nullptr) {
-                    inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
+    // Print the tracking interval to the console once every 10 seconds
+    if (current_time - last_print_time > 10000) {
+        last_print_time = current_time;
+        // Prints the exact milliseconds since OpenDTU last caught an MQTT limit message
+        ESP_LOGI("WATCHDOG_TEST", "Time since last script command: %lu ms (SafeMode Active: %d)", 
+                 elapsed_since_last_cmd, watchdog_safe_mode_active);
+    }
+
+    // Standard 5-Minute Fallback Check (300,000 ms)
+    if (!watchdog_safe_mode_active && (elapsed_since_last_cmd > 300000)) {
+        watchdog_safe_mode_active = true; 
+        ESP_LOGE("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
+        
+        for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
+            auto inv = Hoymiles.getInverterByPos(i);
+            if (inv != nullptr) {
+                inv->sendActivePowerControlRequest(200, 0); 
             }
         }
     }
