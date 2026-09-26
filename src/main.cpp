@@ -146,8 +146,9 @@ void loop()
         Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
         
         // This utilizes the standard global wrapper instance native to main.cpp
-        for (auto& [serial, inv] : app.getInverters()) {
-            inv.sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
+        for (auto& [serial, inv] : dtuApp.getInverters()) {
+            // Using 200 Watts and 0 (the raw enum index for AbsoluteNonPersistent)
+            inv.sendActivePowerControlRequest(20, 0); 
         }
     }
 }
