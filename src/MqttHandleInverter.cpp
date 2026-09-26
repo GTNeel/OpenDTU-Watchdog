@@ -81,7 +81,7 @@ void MqttHandleInverterClass::loop()
             for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
                 auto inv = Hoymiles.getInverterByPos(i);
                 if (inv != nullptr) {
-                    inv->sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent); 
+                    inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
             }
         }
     }
