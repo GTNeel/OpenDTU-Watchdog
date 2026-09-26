@@ -171,9 +171,10 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     
     const CONFIG_T& config = Configuration.get();
 
-    char token_topic[MQTT_MAX_TOPIC_STRLEN + 40]; // respect all subtopics
-    strncpy(token_topic, topic, MQTT_MAX_TOPIC_STRLEN + 40); // convert const char* to char*
-
+    char token_topic[MQTT_MAX_TOPIC_STRLEN + 40];
+    strncpy(token_topic, msg_topic, MQTT_MAX_TOPIC_STRLEN + 40); // <-- CHANGED 'topic' TO 'msg_topic'
+    token_topic[MQTT_MAX_TOPIC_STRLEN + 40 - 1] = '\0';
+    
     char* serial_str;
     char* rest = &token_topic[strlen(config.Mqtt.Topic)];
 
