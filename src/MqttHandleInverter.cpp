@@ -163,7 +163,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
         for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
             auto inv = Hoymiles.getInverterByPos(i);
             if (inv != nullptr) {
-                inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
+                inv->sendActivePowerControlRequest(200, (PowerLimitControlType)0); 
             }
         }
     }
@@ -172,7 +172,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     const CONFIG_T& config = Configuration.get();
 
     char token_topic[MQTT_MAX_TOPIC_STRLEN + 40];
-    strncpy(token_topic, msg_topic, MQTT_MAX_TOPIC_STRLEN + 40); // <-- CHANGED 'topic' TO 'msg_topic'
+    strncpy(token_topic, msg_topic, MQTT_MAX_TOPIC_STRLEN + 40); 
     token_topic[MQTT_MAX_TOPIC_STRLEN + 40 - 1] = '\0';
     
     char* serial_str;
@@ -199,7 +199,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
         payload_val = std::stof(strValue);
     } catch (std::invalid_argument const& e) {
         ESP_LOGW(TAG, "MQTT handler: cannot parse payload of topic '%s' as float: %s",
-            topic, strValue.c_str());
+            const char* topic = msg_topic;
         return;
     }
 
