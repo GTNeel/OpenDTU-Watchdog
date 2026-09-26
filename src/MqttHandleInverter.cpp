@@ -8,8 +8,8 @@
 
 #undef TAG
 static const char* TAG = "mqtt";
-extern unsigned long last_network_cmd_time;
-extern bool watchdog_safe_mode_active;
+unsigned long last_network_cmd_time = 0; 
+bool watchdog_safe_mode_active = false;
 
 #define PUBLISH_MAX_INTERVAL 60000
 
@@ -29,8 +29,20 @@ void MqttHandleInverterClass::init(Scheduler& scheduler)
     _loopTask.enable();
 }
 
-void MqttHandleInverterClass::loop()
-{
+void MqttHandleInverterClass::loop() {
+    // ... WATCHDOG LOOP TIMER ...
+    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
+    if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
+        watchdog_safe_mode_active = true; 
+        ESP_LOGI("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
+        
+        // Inside this file, 'inv' or your loop object is natively exposed.
+        // Let's force the absolute limit directly using the file's native call:
+        for (auto &inv : _inverters) { 
+            inv->sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
+        }
+    }
+}
     _loopTask.setInterval(Configuration.get().Mqtt.PublishInterval * TASK_SECOND);
 
     if (!MqttSettings.getConnected() || !Hoymiles.isAllRadioIdle()) {
