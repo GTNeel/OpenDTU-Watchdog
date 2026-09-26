@@ -5,6 +5,10 @@
 [![Yarn Linting](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnlint.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnlint.yml)
 [![Yarn Prettier](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnprettier.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnprettier.yml)
 
+## WatchDog
+I've added WatchDog code so if the controller software doesn't send updates for 5 minutes the DTU will set the inverter's non-persistent power to 20w until control is returned.
+This can happen if the WiFi network goes down or if the controller code crashes etc.
+
 ## !! IMPORTANT UPGRADE NOTES !!
 
 If you are upgrading from a version before 15.03.2023 you have to upgrade the partition table of the ESP32. Please follow the [this](docs/UpgradePartition.md) documentation!
