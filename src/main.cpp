@@ -144,11 +144,9 @@ void loop()
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
         watchdog_safe_mode_active = true; 
         Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
-        
         for (uint8_t i = 0; i < InverterApp.getInverterCount(); i++) {
             auto inv = InverterApp.getInverter(i);
-            // Forces 200 Watts limit using the Absolute control type
-            inv->sendActivePowerControlRequest(200, PowerLimitControlType::AbsoluteNonPersistent);
+            inv->sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
         }
     }
 }
