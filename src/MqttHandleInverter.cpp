@@ -152,7 +152,7 @@ String MqttHandleInverterClass::getTopic(std::shared_ptr<InverterAbstract> inv, 
     return inv->serialString() + "/" + chanNum + "/" + chanName;
 }
 
-void MqttHandleInverterClass::onMqttMessage(Topic topic, const espMqttClientTypes::MessageProperties& properties, const char* msg_topic, const uint8_t* payload, size_t len)
+void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::MessageProperties& properties, const char* msg_topic, const uint8_t* payload, size_t len)
 {
     // --- YOUR 5-MINUTE WATCHDOG CHECK ---
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
