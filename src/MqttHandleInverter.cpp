@@ -163,7 +163,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
         for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
             auto inv = Hoymiles.getInverterByPos(i);
             if (inv != nullptr) {
-                inv->sendActivePowerControlRequest(200, (PowerLimitControlType)0); 
+                inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
             }
         }
     }
@@ -195,8 +195,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
 
     std::string strValue(reinterpret_cast<const char*>(payload), len);
     float payload_val = -1;
-    
-    // Create the local text alias here, SAFELY OUTSIDE the try/catch logic blocks
+
     const char* topic = msg_topic;
 
     try {
