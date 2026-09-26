@@ -144,9 +144,8 @@ void loop()
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
         watchdog_safe_mode_active = true; 
         Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
-        for (uint8_t i = 0; i < InverterApp.getInverterCount(); i++) {
-            auto inv = InverterApp.getInverter(i);
-            inv->sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
+        for (auto& [serial, inv] : dtuApp.getInverters()) {
+            inv.sendActivePowerControlRequest(20, Dtu::PowerLimitControlType::AbsoluteNonPersistent);
         }
     }
 }
