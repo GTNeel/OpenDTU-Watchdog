@@ -83,15 +83,16 @@ void MqttHandleInverterClass::loop()
     // Print the tracking interval to the console once every 10 seconds
     if (current_time - last_print_time > 10000) {
         last_print_time = current_time;
-        // Prints the exact milliseconds since OpenDTU last caught an MQTT limit message
-        ESP_LOGI("WATCHDOG_TEST", "Time since last script command: %lu ms (SafeMode Active: %d)", 
+        // Swapping out the custom text string for the native global 'TAG' variable
+        ESP_LOGI(TAG, "[WATCHDOG TEST] Time since last script command: %lu ms (SafeMode Active: %d)", 
                  elapsed_since_last_cmd, watchdog_safe_mode_active);
     }
 
     // Standard 5-Minute Fallback Check (300,000 ms)
     if (!watchdog_safe_mode_active && (elapsed_since_last_cmd > 300000)) {
         watchdog_safe_mode_active = true; 
-        ESP_LOGE("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
+        // Changed this to ESP_LOGW (Warning) so it stands out in a bright yellow color
+        ESP_LOGW(TAG, "[WATCHDOG ERROR] Network silent for 5 minutes! Dropping to safety limit.");
         
         for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
             auto inv = Hoymiles.getInverterByPos(i);
