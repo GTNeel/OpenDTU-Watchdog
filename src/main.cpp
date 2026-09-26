@@ -32,10 +32,6 @@
 #undef TAG
 static const char* TAG = "main";
 
-// --- WATCHDOG CONTROLS ---
-unsigned long last_network_cmd_time = 0; 
-bool watchdog_safe_mode_active = false;
-
 void setup()
 {
     // Move all dynamic allocations >512byte to psram (if available)
@@ -139,16 +135,4 @@ void setup()
 void loop()
 {
     scheduler.execute();
-
-    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
-    if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
-        watchdog_safe_mode_active = true; 
-        Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
-        
-        // This utilizes the standard global wrapper instance native to main.cpp
-        for (auto& [serial, inv] : dtuApp.getInverters()) {
-            // Using 200 Watts and 0 (the raw enum index for AbsoluteNonPersistent)
-            inv.sendActivePowerControlRequest(20, 0); 
-        }
-    }
 }
