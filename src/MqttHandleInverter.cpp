@@ -29,20 +29,8 @@ void MqttHandleInverterClass::init(Scheduler& scheduler)
     _loopTask.enable();
 }
 
-void MqttHandleInverterClass::loop() {
-    // ... WATCHDOG LOOP TIMER ...
-    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
-    if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
-        watchdog_safe_mode_active = true; 
-        ESP_LOGI("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
-        
-        // Inside this file, 'inv' or your loop object is natively exposed.
-        // Let's force the absolute limit directly using the file's native call:
-        for (auto &inv : _inverters) { 
-            inv->sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
-        }
-    }
-}
+void MqttHandleInverterClass::loop()
+{
     _loopTask.setInterval(Configuration.get().Mqtt.PublishInterval * TASK_SECOND);
 
     if (!MqttSettings.getConnected() || !Hoymiles.isAllRadioIdle()) {
@@ -85,6 +73,19 @@ void MqttHandleInverterClass::loop() {
             MqttSettings.publish(subtopic + "/device/hwversion", inv->DevInfo()->getHwVersion());
         }
 
+    // === 5-MINUTE SAFETY WATCHDOG FALLBACK ===
+        if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
+            watchdog_safe_mode_active = true; 
+            ESP_LOGI("WATCHDOG", "Network silent for 5 minutes! Dropping to safety limit.");
+
+            for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
+                auto inv = Hoymiles.getInverterByPos(i);
+                if (inv != nullptr) {
+                    inv->sendActivePowerControlRequest(20, 0); 
+            }
+        }
+    }
+        
         if (inv->SystemConfigPara()->getLastUpdate() > 0) {
             // Limit
             MqttSettings.publish(subtopic + "/status/limit_relative", String(inv->SystemConfigPara()->getLimitPercent()));
