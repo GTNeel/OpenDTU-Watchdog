@@ -140,12 +140,14 @@ void loop()
 {
     scheduler.execute();
 
-    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK --- 
+    // --- 5-MINUTE SAFETY WATCHDOG FALLBACK ---
     if (!watchdog_safe_mode_active && (millis() - last_network_cmd_time > 300000)) {
         watchdog_safe_mode_active = true; 
         Serial.println("[WATCHDOG] Network script silent! Safe dropping inverter output.");
-        for (auto& [serial, inv] : dtuApp.getInverters()) {
-            inv.sendActivePowerControlRequest(20, Dtu::PowerLimitControlType::AbsoluteNonPersistent);
+        
+        // This utilizes the standard global wrapper instance native to main.cpp
+        for (auto& [serial, inv] : app.getInverters()) {
+            inv.sendActivePowerControlRequest(20, PowerLimitControlType::AbsoluteNonPersistent);
         }
     }
 }
