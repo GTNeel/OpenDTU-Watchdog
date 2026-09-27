@@ -129,7 +129,6 @@ void setup()
     RestartHelper.init(scheduler);
 
     ESP_LOGI(TAG, "Startup complete");
-    
 }
 
 void loop()
