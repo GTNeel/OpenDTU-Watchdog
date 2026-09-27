@@ -181,14 +181,6 @@ String MqttHandleInverterClass::getTopic(std::shared_ptr<InverterAbstract> inv, 
 
 void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::MessageProperties& properties, const char* msg_topic, const uint8_t* payload, size_t len)
 {
-    // --- 5-MINUTE WATCHDOG CHECK ---
-    char token_topic[MQTT_MAX_TOPIC_STRLEN + 40];
-    strncpy(token_topic, msg_topic, MQTT_MAX_TOPIC_STRLEN + 40); 
-    token_topic[MQTT_MAX_TOPIC_STRLEN + 40 - 1] = '\0';
-    
-    const char* topic = msg_topic; 
-    // --- END OF WATCHDOG ---
-    
     const CONFIG_T& config = Configuration.get();
 
     char token_topic[MQTT_MAX_TOPIC_STRLEN + 40];
