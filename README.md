@@ -5,9 +5,11 @@
 [![Yarn Linting](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnlint.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnlint.yml)
 [![Yarn Prettier](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnprettier.yml/badge.svg)](https://github.com/tbnobody/OpenDTU/actions/workflows/yarnprettier.yml)
 
-## WatchDog
-I've added WatchDog code so if the controller software doesn't send updates for 5 minutes the DTU will set the inverter's non-persistent power to 20w until control is returned.
-This can happen if the WiFi network goes down or if the controller code crashes etc. Testing is not complete yet!
+## WatchDog - Testing is not complete yet - but seems OK! 
+
+When exploring threads on the OpenDTU GitHub Discussions board and specialized solar automation subreddits, users frequently post about their automation scripts crashing due to WiFi drops, router freezes, server or Raspberry Pi crashes, lockups, or Home Assistant updates etc. The standard consensus in the community is usually to write complex secondary monitoring scripts on another networked computer just to watch the first script. 
+By modifying the DTU natively to track the internal data pathways instead, it makes a minimalist, self-reliant solution that bypasses networked dependencies entirely.
+I've added WatchDog code so if the controller software doesn't send updates for 5 minutes the DTU will set the inverter's non-persistent power to 20w until control is returned manually or through other automated recovery steps. Note: 5 minutes with no updates can occur in some systems due to events such as long A/C cycles when max power is set and no updates are necessary. Verbose MQTT Client logging will show WATCHDOG msg if no active control for > 5 min.
 
 ## !! IMPORTANT UPGRADE NOTES !!
 
