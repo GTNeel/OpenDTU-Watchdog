@@ -38,11 +38,11 @@ void MqttHandleInverterClass::loop()
     uint32_t current_time = millis();
 
     // LIVE DIAGNOSTIC PRINT: Forces status values to print once every 10 seconds in yellow
-    if (current_time - last_diagnostic_print > 10000) {
-        last_diagnostic_print = current_time;
-        ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
-                 current_time, last_network_cmd_time, watchdog_safe_mode_active);
-    }
+    // if (current_time - last_diagnostic_print > 10000) {
+    //     last_diagnostic_print = current_time;
+    //     ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
+    //              current_time, last_network_cmd_time, watchdog_safe_mode_active);
+    // }
 
     // Standard 5-Minute Fallback Check (300,000 ms)
     if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > 300000)) {
@@ -184,7 +184,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
 {
     // === DIAGNOSTIC TOPIC LOGGER ===
     // This forces OpenDTU to print out EVERY incoming MQTT topic name it catches in bright yellow text!
-    ESP_LOGW(TAG, "[MQTT TRAFFIC CATCH] Incoming Topic: %s", topic);
+    // ESP_LOGW(TAG, "[MQTT TRAFFIC CATCH] Incoming Topic: %s", topic);
     // ===============================
     
     const CONFIG_T& config = Configuration.get();
@@ -228,16 +228,12 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitPersistentRelative:
         // Set inverter limit relative persistent
         ESP_LOGI(TAG, "Limit Persistent: %.1f %%", payload_val);
-        last_network_cmd_time = millis(); 
-        watchdog_safe_mode_active = false;
         inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::RelativPersistent);
         break;
 
     case Topic::LimitPersistentAbsolute:
         // Set inverter limit absolute persistent
         ESP_LOGI(TAG, "Limit Persistent: %.1f W", payload_val);
-        last_network_cmd_time = millis(); 
-        watchdog_safe_mode_active = false;
         inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::AbsolutPersistent);
         break;
 
