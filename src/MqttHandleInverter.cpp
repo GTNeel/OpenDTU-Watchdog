@@ -184,7 +184,7 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
 {
     // === DIAGNOSTIC TOPIC LOGGER ===
     // This forces OpenDTU to print out EVERY incoming MQTT topic name it catches in bright yellow text!
-    printf("[MQTT TRAFFIC CATCH] Incoming Topic: %s\n", msg_topic);
+    printf("[MQTT TRAFFIC CATCH] Incoming Topic: %s\n", topic);
     // ===============================
     
     const CONFIG_T& config = Configuration.get();
