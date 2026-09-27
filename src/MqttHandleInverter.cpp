@@ -7,9 +7,9 @@
 #include <ctime>
 
 #undef TAG
-static const char* TAG = "mqtt";
 unsigned long last_network_cmd_time = 0; 
 bool watchdog_safe_mode_active = false;
+static const char* TAG = "mqtt";
 
 #define PUBLISH_MAX_INTERVAL 60000
 
@@ -31,6 +31,34 @@ void MqttHandleInverterClass::init(Scheduler& scheduler)
 
 void MqttHandleInverterClass::loop()
 {
+    // =====================================================================
+    // === 1. TOP-OF-LOOP SAFETY WATCHDOG (Bypasses all network exit traps) ===
+    // =====================================================================
+    static unsigned long last_diagnostic_print = 0;
+    unsigned long current_time = millis();
+
+    // LIVE DIAGNOSTIC PRINT: Forces status values to print once every 10 seconds in yellow
+    if (current_time - last_diagnostic_print > 10000) {
+        last_diagnostic_print = current_time;
+        ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
+                 current_time, last_network_cmd_time, watchdog_safe_mode_active);
+    }
+
+    // Standard 5-Minute Fallback Check (300,000 ms)
+    if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > 300000)) {
+        watchdog_safe_mode_active = true; 
+        ESP_LOGW(TAG, "[WATCHDOG] Script silent for 5 minutes! Safe dropping inverter output.");
+        
+        for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
+            auto inv = Hoymiles.getInverterByPos(i);
+            if (inv != nullptr) {
+                // Force 20 Watts using the raw integer '0' index to prevent any namespace crashes
+                inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
+            }
+        } 
+    }
+    // =====================================================================
+    
     _loopTask.setInterval(Configuration.get().Mqtt.PublishInterval * TASK_SECOND);
 
     if (!MqttSettings.getConnected() || !Hoymiles.isAllRadioIdle()) {
@@ -115,34 +143,7 @@ void MqttHandleInverterClass::loop()
 
         yield();
     }
-
-    // --- WatchDog  DROPPING THE TWO TIME VARIABLE TRACKERS RIGHT HERE ---
-    static unsigned long last_diagnostic_print = 0;
-    unsigned long current_time = millis();
-
-    // LIVE DIAGNOSTIC PRINT: Forces values to print to the console once every 10 seconds
-    if (current_time - last_diagnostic_print > 10000) {
-        last_diagnostic_print = current_time;
-        // Using ESP_LOGW (Warning) so it forces its way onto the active MQTT console in yellow text!
-        ESP_LOGW(TAG, "[WATCHDOG CODE DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
-                 current_time, last_network_cmd_time, watchdog_safe_mode_active);
-    }
-
-    // Standard 5-Minute Fallback Check (300,000 ms)
-    if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > 300000)) {
-        watchdog_safe_mode_active = true; 
-        ESP_LOGW(TAG, "[WATCHDOG] Script silent for 5 minutes! Safe dropping inverter output.");
-        
-        for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
-            auto inv = Hoymiles.getInverterByPos(i);
-            if (inv != nullptr) {
-                inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
-            }
-        } 
-    } 
-
-} // End this part WatchDog
-
+}
 
 void MqttHandleInverterClass::publishField(std::shared_ptr<InverterAbstract> inv, const ChannelType_t type, const ChannelNum_t channel, const FieldId_t fieldId)
 {
@@ -179,14 +180,13 @@ String MqttHandleInverterClass::getTopic(std::shared_ptr<InverterAbstract> inv, 
     return inv->serialString() + "/" + chanNum + "/" + chanName;
 }
 
-void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::MessageProperties& properties, const char* msg_topic, const uint8_t* payload, size_t len)
+void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, const size_t len)
 {
     const CONFIG_T& config = Configuration.get();
 
-    char token_topic[MQTT_MAX_TOPIC_STRLEN + 40];
-    strncpy(token_topic, msg_topic, MQTT_MAX_TOPIC_STRLEN + 40); 
-    token_topic[MQTT_MAX_TOPIC_STRLEN + 40 - 1] = '\0';
-    
+    char token_topic[MQTT_MAX_TOPIC_STRLEN + 40]; // respect all subtopics
+    strncpy(token_topic, topic, MQTT_MAX_TOPIC_STRLEN + 40); // convert const char* to char*
+
     char* serial_str;
     char* rest = &token_topic[strlen(config.Mqtt.Topic)];
 
@@ -207,17 +207,14 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
 
     std::string strValue(reinterpret_cast<const char*>(payload), len);
     float payload_val = -1;
-
-    const char* topic = msg_topic;
-
     try {
         payload_val = std::stof(strValue);
     } catch (std::invalid_argument const& e) {
-        // This macro is now perfectly put back together and closed with );
-        ESP_LOGW(TAG, "MQTT handler: cannot parse payload of topic '%s' as float: %s", topic, strValue.c_str());
+        ESP_LOGW(TAG, "MQTT handler: cannot parse payload of topic '%s' as float: %s",
+            topic, strValue.c_str());
         return;
     }
-    
+
     switch (t) {
     case Topic::LimitPersistentRelative:
         // Set inverter limit relative persistent
@@ -234,9 +231,10 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitNonPersistentRelative:
         // Set inverter limit relative non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f %%", payload_val);
-        // --- WatchDog Check 2 lines---
+
         last_network_cmd_time = millis(); 
         watchdog_safe_mode_active = false;
+
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::RelativNonPersistent);
         } else {
@@ -247,9 +245,10 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitNonPersistentAbsolute:
         // Set inverter limit absolute non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f W", payload_val);
-        // --- WatchDog Check 2 lines---
+        
         last_network_cmd_time = millis(); 
-        watchdog_safe_mode_active = false; 
+        watchdog_safe_mode_active = false;
+
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::AbsolutNonPersistent);
         } else {
