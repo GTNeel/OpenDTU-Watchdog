@@ -9,8 +9,6 @@
 
 #undef TAG
 static const char* TAG = "mqtt";
-extern uint32_t last_network_cmd_time;
-extern bool watchdog_safe_mode_active;
 
 MqttSettingsClass::MqttSettingsClass()
 {
@@ -88,8 +86,6 @@ void MqttSettingsClass::onMqttDisconnect(espMqttClientTypes::DisconnectReason re
 
 void MqttSettingsClass::onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, const size_t len, const size_t index, const size_t total)
 {
-    last_network_cmd_time = millis(); 
-    watchdog_safe_mode_active = false;
     ESP_LOGD(TAG, "Received MQTT message on topic '%s' (Bytes %zu-%zu/%zu)",
         topic, index + 1, (index + len), total);
 
