@@ -7,7 +7,7 @@
 #include <ctime>
 
 #undef TAG
-unsigned long last_network_cmd_time = 0; 
+uint32_t last_network_cmd_time = 0; 
 bool watchdog_safe_mode_active = false;
 static const char* TAG = "mqtt";
 
@@ -34,8 +34,8 @@ void MqttHandleInverterClass::loop()
     // =====================================================================
     // === 1. TOP-OF-LOOP SAFETY WATCHDOG (Bypasses all network exit traps) ===
     // =====================================================================
-    static unsigned long last_diagnostic_print = 0;
-    unsigned long current_time = millis();
+    static uint32_t last_diagnostic_print = 0;
+    uint32_t current_time = millis();
 
     // LIVE DIAGNOSTIC PRINT: Forces status values to print once every 10 seconds in yellow
     if (current_time - last_diagnostic_print > 10000) {
