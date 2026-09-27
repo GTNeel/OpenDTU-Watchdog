@@ -224,22 +224,24 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitPersistentRelative:
         // Set inverter limit relative persistent
         ESP_LOGI(TAG, "Limit Persistent: %.1f %%", payload_val);
+        last_network_cmd_time = millis(); 
+        watchdog_safe_mode_active = false;
         inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::RelativPersistent);
         break;
 
     case Topic::LimitPersistentAbsolute:
         // Set inverter limit absolute persistent
         ESP_LOGI(TAG, "Limit Persistent: %.1f W", payload_val);
+        last_network_cmd_time = millis(); 
+        watchdog_safe_mode_active = false;
         inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::AbsolutPersistent);
         break;
 
     case Topic::LimitNonPersistentRelative:
         // Set inverter limit relative non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f %%", payload_val);
-
         last_network_cmd_time = millis(); 
         watchdog_safe_mode_active = false;
-
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::RelativNonPersistent);
         } else {
@@ -250,10 +252,8 @@ void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::M
     case Topic::LimitNonPersistentAbsolute:
         // Set inverter limit absolute non persistent
         ESP_LOGI(TAG, "Limit Non-Persistent: %.1f W", payload_val);
-        
         last_network_cmd_time = millis(); 
         watchdog_safe_mode_active = false;
-
         if (!properties.retain) {
             inv->sendActivePowerControlRequest(payload_val, PowerLimitControlType::AbsolutNonPersistent);
         } else {
