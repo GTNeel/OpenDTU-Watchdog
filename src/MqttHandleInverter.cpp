@@ -182,11 +182,7 @@ String MqttHandleInverterClass::getTopic(std::shared_ptr<InverterAbstract> inv, 
 
 void MqttHandleInverterClass::onMqttMessage(Topic t, const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, const size_t len)
 {
-    // === DIAGNOSTIC TOPIC LOGGER ===
-    // This forces OpenDTU to print out EVERY incoming MQTT topic name it catches in bright yellow text!
-    // ESP_LOGW(TAG, "[MQTT TRAFFIC CATCH] Incoming Topic: %s", topic);
-    // ===============================
-    
+
     const CONFIG_T& config = Configuration.get();
     // WatchDog - If ANY control message hits this file, the network script is alive!
     last_network_cmd_time = millis(); 
