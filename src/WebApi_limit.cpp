@@ -9,6 +9,8 @@
 #include "helper.h"
 #include <AsyncJson.h>
 #include <Hoymiles.h>
+extern uint32_t last_network_cmd_time;
+extern bool watchdog_safe_mode_active;
 
 void WebApiLimitClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -52,6 +54,11 @@ void WebApiLimitClass::onLimitStatus(AsyncWebServerRequest* request)
 
 void WebApiLimitClass::onLimitPost(AsyncWebServerRequest* request)
 {
+    // === UNIVERSAL WEB API RESET GATE ===
+    // If your script hits the Web API to change limits, update the clock!
+    last_network_cmd_time = millis(); 
+    watchdog_safe_mode_active = false;
+    // ====================================
     if (!WebApi.checkCredentials(request)) {
         return;
     }
