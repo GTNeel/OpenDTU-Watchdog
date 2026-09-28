@@ -8,6 +8,7 @@
 #include <LittleFS.h>
 #include <SpiManager.h>
 #include <string.h>
+#include "defaults.h"
 
 #undef TAG
 static const char* TAG = "pinmapping";
