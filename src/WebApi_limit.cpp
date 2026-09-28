@@ -11,6 +11,8 @@
 #include <Hoymiles.h>
 extern uint32_t last_network_cmd_time;
 extern bool watchdog_safe_mode_active;
+extern uint32_t custom_watchdog_timeout;
+extern float custom_fallback_watts;
 
 void WebApiLimitClass::init(AsyncWebServer& server, Scheduler& scheduler)
 {
@@ -56,6 +58,16 @@ void WebApiLimitClass::onLimitPost(AsyncWebServerRequest* request)
 {
     // === UNIVERSAL WEB API RESET GATE ===
     // If your script hits the Web API to change limits, update the clock!
+    extern uint32_t custom_watchdog_timeout;
+    extern float custom_fallback_watts;
+
+    // 2. THE DYNAMIC SETTINGS INTERCEPT (Optional: only needed if you want live web control)
+    if (request->hasParam("timeout")) {
+        custom_watchdog_timeout = request->getParam("timeout")->value().toInt();
+    }
+    if (request->hasParam("fallback")) {
+        custom_fallback_watts = request->getParam("fallback")->value().toFloat();
+    }
     last_network_cmd_time = millis(); 
     watchdog_safe_mode_active = false;
     // ====================================
