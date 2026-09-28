@@ -9,6 +9,8 @@
 #undef TAG
 uint32_t last_network_cmd_time = 0; 
 bool watchdog_safe_mode_active = false;
+uint32_t custom_watchdog_timeout = WATCHDOG_TIMEOUT_MS;
+float custom_fallback_watts = WATCHDOG_FALLBACK_WATTS;
 static const char* TAG = "mqtt";
 
 #define PUBLISH_MAX_INTERVAL 60000
@@ -44,16 +46,16 @@ void MqttHandleInverterClass::loop()
     //              current_time, last_network_cmd_time, watchdog_safe_mode_active);
     // }
 
-    // Standard 5-Minute Fallback Check (300,000 ms)
-    if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > 300000)) {
+    // Standard 5-Minute Fallback Check using the dynamic custom variables
+    if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > custom_watchdog_timeout)) {
         watchdog_safe_mode_active = true; 
-        ESP_LOGW(TAG, "[WATCHDOG] Script silent for 5 minutes! Safe dropping inverter output.");
+        ESP_LOGW(TAG, "[WATCHDOG] Script silent! Safe dropping inverter output.");
         
         for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
             auto inv = Hoymiles.getInverterByPos(i);
             if (inv != nullptr) {
-                // Force 20 Watts using the raw integer '0' index to prevent any namespace crashes
-                inv->sendActivePowerControlRequest(20, (PowerLimitControlType)0); 
+                // Swapped the hardcoded watts for your new custom baseline variable
+                inv->sendActivePowerControlRequest(custom_fallback_watts, (PowerLimitControlType)0); 
             }
         } 
     }
