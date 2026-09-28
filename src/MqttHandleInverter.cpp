@@ -47,15 +47,19 @@ void MqttHandleInverterClass::loop()
                  current_time, last_network_cmd_time, watchdog_safe_mode_active);
     }
 
-    // Standard 5-Minute Fallback Check using the dynamic custom variables
+    // Standard Timeout Fallback Check (using your custom configuration variables)
     if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > custom_watchdog_timeout)) {
         watchdog_safe_mode_active = true; 
-        ESP_LOGW(TAG, "[WATCHDOG] Script silent! Safe dropping inverter output.");
         
+        // === THE VERIFICATION ECHO (Fires BEFORE the radio injection attempt) ===
+        ESP_LOGW(TAG, "[WATCHDOG TRIGGER] Script silent! Active Watchdog Rule - Timeout: %u ms | Safety Target Floor: %.1f W", 
+                 custom_watchdog_timeout, custom_fallback_watts);
+        
+        // Firing the radio packets to force the fallback output limit
         for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
             auto inv = Hoymiles.getInverterByPos(i);
             if (inv != nullptr) {
-                // Swapped the hardcoded watts for your new custom baseline variable
+                // Uses the parsed or default dynamic baseline variable
                 inv->sendActivePowerControlRequest(custom_fallback_watts, (PowerLimitControlType)0); 
             }
         } 
