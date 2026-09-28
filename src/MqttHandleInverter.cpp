@@ -10,8 +10,8 @@
 #undef TAG
 uint32_t last_network_cmd_time = 0; 
 bool watchdog_safe_mode_active = false;
-uint32_t custom_watchdog_timeout = WATCHDOG_TIMEOUT_MS;
-float custom_fallback_watts = WATCHDOG_FALLBACK_WATTS;
+uint32_t custom_watchdog_timeout;
+float custom_fallback_watts;
 static const char* TAG = "mqtt";
 
 #define PUBLISH_MAX_INTERVAL 60000
@@ -39,8 +39,13 @@ void MqttHandleInverterClass::loop()
     // =====================================================================
     static uint32_t last_diagnostic_print = 0;
     uint32_t current_time = millis();
-
-    // LIVE DIAGNOSTIC PRINT: Forces status values to print once every 10 seconds in yellow
+    static bool first_run = true;
+    if (first_run) {
+        if (custom_watchdog_timeout == 0) custom_watchdog_timeout = WATCHDOG_TIMEOUT_MS;
+        if (custom_fallback_watts == 0) custom_fallback_watts = WATCHDOG_FALLBACK_WATTS;
+        first_run = false;
+    }
+    // LIVE DIAGNOSTIC PRINT: Forces status values to print once every minute in yellow
     if (current_time - last_diagnostic_print > 63000) {
         last_diagnostic_print = current_time;
         ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %u | Last Cmd Time: %u | Active State: %d", 
