@@ -226,6 +226,19 @@ bool PinMappingClass::init(const String& deviceMapping)
 
     for (uint8_t i = 0; i < doc.size(); i++) {
         String devName = doc[i]["name"] | "";
+        // We fetch the values out of the array index directly.
+        uint32_t parsed_timeout = doc[i]["watchdog"]["timeout_ms"] | WATCHDOG_TIMEOUT_MS;
+        float parsed_watts = doc[i]["watchdog"]["fallback_watts"] | WATCHDOG_FALLBACK_WATTS;
+        
+        // Only update the actual runtime system values if it found a non-default number!
+        if (parsed_timeout != WATCHDOG_TIMEOUT_MS || parsed_watts != WATCHDOG_FALLBACK_WATTS) {
+            custom_watchdog_timeout = parsed_timeout;
+            custom_fallback_watts = parsed_watts;
+            
+            ESP_LOGW("WATCHDOG", "[GLOBAL JSON SUCCESS] Grabbed values! Timeout: %u ms | Fallback: %.1f W", 
+                     custom_watchdog_timeout, custom_fallback_watts);
+        }
+
         if (devName == deviceMapping) {
             _mappingSelected = true;
 
@@ -273,14 +286,7 @@ bool PinMappingClass::init(const String& deviceMapping)
 
             _pinMapping.led[0] = doc[i]["led"]["led0"] | LED0;
             _pinMapping.led[1] = doc[i]["led"]["led1"] | LED1;
-            if (doc[i].containsKey("watchdog")) {
-                custom_watchdog_timeout = doc[i]["watchdog"]["timeout_ms"] | WATCHDOG_TIMEOUT_MS;
-                custom_fallback_watts = doc[i]["watchdog"]["fallback_watts"] | WATCHDOG_FALLBACK_WATTS;
-                
-                // Blast an confirmation tag straight into the system core logs
-                ESP_LOGW("WATCHDOG", "[HIJACK SUCCESS] Loaded parameters! Timeout: %u ms | Fallback: %.1f W", 
-                         custom_watchdog_timeout, custom_fallback_watts);
-            }
+
             return true;
         }
     }
