@@ -229,13 +229,11 @@ bool PinMappingClass::init(const String& deviceMapping)
         // We fetch the values out of the array index directly.
         uint32_t parsed_timeout = doc[i]["watchdog"]["timeout_ms"] | WATCHDOG_TIMEOUT_MS;
         float parsed_watts = doc[i]["watchdog"]["fallback_watts"] | WATCHDOG_FALLBACK_WATTS;
-        
-        // Only update the actual runtime system values if it found a non-default number!
-        if (parsed_timeout != WATCHDOG_TIMEOUT_MS || parsed_watts != WATCHDOG_FALLBACK_WATTS) {
-            custom_watchdog_timeout = parsed_timeout;
-            custom_fallback_watts = parsed_watts;
+        if (doc[i].containsKey("watchdog")) {
+            custom_watchdog_timeout = doc[i]["watchdog"]["timeout_ms"] | WATCHDOG_TIMEOUT_MS;
+            custom_fallback_watts = doc[i]["watchdog"]["fallback_watts"] | WATCHDOG_FALLBACK_WATTS;
             
-            ESP_LOGW("WATCHDOG", "[GLOBAL JSON SUCCESS] Grabbed values! Timeout: %u ms | Fallback: %.1f W", 
+            ESP_LOGI("WATCHDOG", "[GLOBAL JSON SUCCESS] Grabbed values! Timeout: %u ms | Fallback: %.1f W", 
                      custom_watchdog_timeout, custom_fallback_watts);
         }
 
