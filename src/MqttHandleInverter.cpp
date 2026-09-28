@@ -40,11 +40,11 @@ void MqttHandleInverterClass::loop()
     uint32_t current_time = millis();
 
     // LIVE DIAGNOSTIC PRINT: Forces status values to print once every 10 seconds in yellow
-    // if (current_time - last_diagnostic_print > 10000) {
-    //     last_diagnostic_print = current_time;
-    //     ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
-    //              current_time, last_network_cmd_time, watchdog_safe_mode_active);
-    // }
+    if (current_time - last_diagnostic_print > 63000) {
+        last_diagnostic_print = current_time;
+        ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %lu | Last Cmd Time: %lu | Active State: %d", 
+                 current_time, last_network_cmd_time, watchdog_safe_mode_active);
+    }
 
     // Standard 5-Minute Fallback Check using the dynamic custom variables
     if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > custom_watchdog_timeout)) {
