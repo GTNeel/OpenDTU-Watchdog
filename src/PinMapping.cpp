@@ -11,6 +11,8 @@
 
 #undef TAG
 static const char* TAG = "pinmapping";
+extern uint32_t custom_watchdog_timeout;
+extern float custom_fallback_watts;
 
 #ifndef DISPLAY_TYPE
 #define DISPLAY_TYPE 0U
@@ -270,7 +272,14 @@ bool PinMappingClass::init(const String& deviceMapping)
 
             _pinMapping.led[0] = doc[i]["led"]["led0"] | LED0;
             _pinMapping.led[1] = doc[i]["led"]["led1"] | LED1;
-
+            if (doc[i].containsKey("watchdog")) {
+                custom_watchdog_timeout = doc[i]["watchdog"]["timeout_ms"] | WATCHDOG_TIMEOUT_MS;
+                custom_fallback_watts = doc[i]["watchdog"]["fallback_watts"] | WATCHDOG_FALLBACK_WATTS;
+                
+                // Blast an confirmation tag straight into the system core logs
+                ESP_LOGW("WATCHDOG", "[HIJACK SUCCESS] Loaded parameters! Timeout: %u ms | Fallback: %.1f W", 
+                         custom_watchdog_timeout, custom_fallback_watts);
+            }
             return true;
         }
     }
