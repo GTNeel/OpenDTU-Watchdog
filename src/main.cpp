@@ -32,6 +32,8 @@
 #undef TAG
 uint32_t last_network_cmd_time = 0;
 bool watchdog_safe_mode_active = false;
+uint32_t custom_watchdog_timeout = 0;
+float custom_fallback_watts = 0;
 
 static const char* TAG = "main";
 
