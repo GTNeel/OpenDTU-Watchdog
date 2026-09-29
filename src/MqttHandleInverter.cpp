@@ -48,7 +48,7 @@ void MqttHandleInverterClass::loop()
     // LIVE DIAGNOSTIC PRINT: Forces status values to print once every minute in yellow
     if (current_time - last_diagnostic_print > 63000) {
         last_diagnostic_print = current_time;
-        ESP_LOGW(TAG, "[WATCHDOG DEBUG] Current Time: %u | Last Cmd Time: %u | Active State: %d", 
+        ESP_LOGI(TAG, "[WATCHDOG DEBUG] Current Time: %u | Last Cmd Time: %u | Active State: %d", 
                  current_time, last_network_cmd_time, watchdog_safe_mode_active);
     }
 
