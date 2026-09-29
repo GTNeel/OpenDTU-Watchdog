@@ -10,8 +10,8 @@
 #undef TAG
 extern uint32_t last_network_cmd_time;
 extern bool watchdog_safe_mode_active;
-uint32_t custom_watchdog_timeout;
-float custom_fallback_watts;
+extern uint32_t custom_watchdog_timeout;
+extern float custom_fallback_watts;
 static const char* TAG = "mqtt";
 
 #define PUBLISH_MAX_INTERVAL 60000
@@ -40,35 +40,41 @@ void MqttHandleInverterClass::loop()
     static uint32_t last_diagnostic_print = 0;
     uint32_t current_time = millis();
     static bool first_run = true;
-    if (first_run) {
-        if (custom_watchdog_timeout == 0) custom_watchdog_timeout = WATCHDOG_TIMEOUT_MS;
-        if (custom_fallback_watts == 0) custom_fallback_watts = WATCHDOG_FALLBACK_WATTS;
-        first_run = false;
-    }
-    // LIVE DIAGNOSTIC PRINT: Forces status values to print once every minute in yellow
-    if (current_time - last_diagnostic_print > 63000) {
-        last_diagnostic_print = current_time;
-        ESP_LOGI(TAG, "[WATCHDOG DEBUG] Current Time: %u | Last Cmd Time: %u | Active State: %d", 
-                 current_time, last_network_cmd_time, watchdog_safe_mode_active);
-    }
+if (first_run) {
+    if (custom_watchdog_timeout == 0) custom_watchdog_timeout = WATCHDOG_TIMEOUT_MS;
+    if (custom_fallback_watts == 0) custom_fallback_watts = WATCHDOG_FALLBACK_WATTS;
+    first_run = false;
+}
 
-    // Standard Timeout Fallback Check (using your custom configuration variables)
-    if (!watchdog_safe_mode_active && (current_time - last_network_cmd_time > custom_watchdog_timeout)) {
-        watchdog_safe_mode_active = true; 
-        
-        // === THE VERIFICATION ECHO (Fires BEFORE the radio injection attempt) ===
-        ESP_LOGW(TAG, "[WATCHDOG TRIGGER] Script silent! Active Watchdog Rule - Timeout: %u ms | Safety Target Floor: %.1f W", 
-                 custom_watchdog_timeout, custom_fallback_watts);
-        
-        // Firing the radio packets to force the fallback output limit
-        for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
-            auto inv = Hoymiles.getInverterByPos(i);
-            if (inv != nullptr) {
-                // Uses the parsed or default dynamic baseline variable
-                inv->sendActivePowerControlRequest(custom_fallback_watts, (PowerLimitControlType)0); 
-            }
-        } 
-    }
+// LIVE DIAGNOSTIC PRINT: Forces status values to print once every minute in yellow
+if (current_time - last_diagnostic_print > 63000) {
+    last_diagnostic_print = current_time;
+    ESP_LOGI(TAG, "[WATCHDOG DEBUG] Current Time: %u | Last Cmd Time: %u | Active State: %d", 
+             current_time, last_network_cmd_time, watchdog_safe_mode_active);
+}
+
+// Calculate delta with safety protection against asynchronous thread updates
+uint32_t delta = 0;
+if (current_time >= last_network_cmd_time) {
+    delta = current_time - last_network_cmd_time;
+}
+
+// Standard Timeout Fallback Check (Sanity check that timeout > 0)
+if (!watchdog_safe_mode_active && (custom_watchdog_timeout > 0) && (delta > custom_watchdog_timeout)) {
+    watchdog_safe_mode_active = true; 
+    
+    // === THE VERIFICATION ECHO ===
+    ESP_LOGW(TAG, "[WATCHDOG TRIGGER] Script silent! Calculated Delta: %u ms | Timeout: %u ms | Safety Target Floor: %.1f W", 
+             delta, custom_watchdog_timeout, custom_fallback_watts);
+    
+    // Firing the radio packets to force the fallback output limit
+    for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
+        auto inv = Hoymiles.getInverterByPos(i);
+        if (inv != nullptr) {
+            inv->sendActivePowerControlRequest(custom_fallback_watts, (PowerLimitControlType)0); 
+        }
+    } 
+}
     // =====================================================================
     
     _loopTask.setInterval(Configuration.get().Mqtt.PublishInterval * TASK_SECOND);
