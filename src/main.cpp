@@ -30,6 +30,9 @@
 #include <esp_heap_caps.h>
 
 #undef TAG
+uint32_t last_network_cmd_time = 0;
+bool watchdog_safe_mode_active = false;
+
 static const char* TAG = "main";
 
 void setup()
