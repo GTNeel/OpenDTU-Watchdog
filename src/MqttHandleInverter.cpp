@@ -8,8 +8,8 @@
 #include <ctime>
 
 #undef TAG
-uint32_t last_network_cmd_time = 0; 
-bool watchdog_safe_mode_active = false;
+extern uint32_t last_network_cmd_time;
+extern bool watchdog_safe_mode_active;
 uint32_t custom_watchdog_timeout;
 float custom_fallback_watts;
 static const char* TAG = "mqtt";
